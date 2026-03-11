@@ -1,0 +1,842 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #fce4e4 0%, #e0f2f1 100%);
+    padding: 20px;
+}
+
+.app {
+    max-width: 1400px;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+    border-radius: 30px;
+    padding: 25px;
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+}
+
+.menu {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 30px;
+    justify-content: center;
+}
+
+.menu-btn {
+    background: rgba(255, 255, 255, 0.5);
+    border: none;
+    padding: 12px 24px;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #5c6b7e;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(5px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.menu-btn:hover {
+    background: rgba(255, 255, 255, 0.8);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+.menu-btn.active {
+    background: #a8e6cf;
+    color: #3b5e4b;
+    box-shadow: 0 4px 12px rgba(168, 230, 207, 0.5);
+}
+
+.content {
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(5px);
+    border-radius: 25px;
+    padding: 25px;
+    min-height: 500px;
+}
+
+.section {
+    display: none;
+    animation: fadeIn 0.5s ease;
+}
+
+.section.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+h2 {
+    color: #5c6b7e;
+    margin-bottom: 20px;
+    font-weight: 400;
+    font-size: 2rem;
+    text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.5);
+}
+
+.add-form {
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 30px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.add-form input,
+.add-form textarea,
+.add-form select {
+    flex: 1 1 200px;
+    padding: 12px 15px;
+    border: none;
+    border-radius: 15px;
+    background: rgba(255, 255, 255, 0.9);
+    font-size: 1rem;
+    transition: all 0.3s;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.add-form input:focus,
+.add-form textarea:focus,
+.add-form select:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px #a8e6cf;
+}
+
+.add-form textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+.add-form button {
+    background: #a8e6cf;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2d5a4b;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 10px rgba(168, 230, 207, 0.4);
+}
+
+.add-form button:hover {
+    background: #8fd9c0;
+    transform: scale(1.02);
+}
+
+/* Календарь дней рождений */
+.calendar-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+}
+
+.month {
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 20px;
+    padding: 15px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.month h3 {
+    text-align: center;
+    color: #5c6b7e;
+    margin-bottom: 15px;
+}
+
+.weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    font-weight: 500;
+    color: #7f8c8d;
+    margin-bottom: 10px;
+}
+
+.days-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+}
+
+.day-cell {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    font-size: 0.9rem;
+    color: #4a5b6b;
+    transition: all 0.2s;
+    position: relative;
+    cursor: default;
+}
+
+.day-cell.birthday {
+    background: #f8bbd0;
+    color: #880e4f;
+    font-weight: 600;
+}
+
+.day-cell.empty {
+    background: transparent;
+}
+
+.day-cell:hover {
+    transform: scale(1.1);
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    z-index: 10;
+}
+
+.day-cell.birthday:hover::after {
+    content: attr(data-names);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(50, 50, 50, 0.9);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+/* Записи (дневники, списки) */
+.entries {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.entry-card {
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 18px;
+    padding: 18px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transition: all 0.3s;
+    border-left: 5px solid #a8e6cf;
+}
+
+.entry-card:hover {
+    transform: translateX(5px);
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.entry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    color: #6b7b8b;
+    font-size: 0.9rem;
+}
+
+.entry-header small {
+    opacity: 0.7;
+}
+
+.delete-btn {
+    background: rgba(255, 255, 255, 0.8);
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    color: #e57373;
+    font-weight: bold;
+    transition: all 0.2s;
+}
+
+.delete-btn:hover {
+    background: #e57373;
+    color: white;
+}
+
+/* Списки (покупки, дела) */
+.list {
+    list-style: none;
+}
+
+.list li {
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 15px;
+    padding: 12px 20px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    transition: all 0.2s;
+}
+
+.list li:hover {
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.list li input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #a8e6cf;
+}
+
+.list li .item-text {
+    flex: 1;
+    color: #3b5e4b;
+}
+
+.list li .delete-item {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: #e57373;
+}
+
+/* Денежный менеджер */
+.subsection {
+    margin-bottom: 30px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 20px;
+    padding: 20px;
+}
+
+.subsection h3 {
+    color: #5c6b7e;
+    margin-bottom: 15px;
+    font-weight: 400;
+}
+
+.accounts-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.account-card {
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 18px;
+    padding: 15px;
+    min-width: 200px;
+    flex: 1 1 auto;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.account-name {
+    font-weight: 600;
+    color: #3b5e4b;
+    font-size: 1.2rem;
+}
+
+.account-balance {
+    font-size: 1.3rem;
+    color: #2c3e50;
+}
+
+.account-edit {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.account-edit input {
+    flex: 1;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.9);
+}
+
+.account-edit button {
+    background: #a8e6cf;
+    border: none;
+    border-radius: 20px;
+    padding: 5px 15px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.account-edit button:hover {
+    background: #8fd9c0;
+}
+
+.report-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.report-buttons button {
+    background: #f8bbd0;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 50px;
+    color: #880e4f;
+    font-weight: 500;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.report-buttons button:hover {
+    background: #f48fb1;
+}
+
+.report-card {
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 20px;
+    padding: 20px;
+    font-size: 0.95rem;
+    color: #2c3e50;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.report-card h4 {
+    margin: 10px 0 5px;
+    color: #3b5e4b;
+}
+
+.report-card table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.report-card td {
+    padding: 4px 0;
+}
+
+/* Список покупок с ценой */
+.shopping-summary {
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 20px;
+    padding: 10px 20px;
+    margin-bottom: 20px;
+    font-size: 1.2rem;
+    color: #3b5e4b;
+    font-weight: 600;
+}
+
+.list li .item-price {
+    margin-left: auto;
+    color: #7f8c8d;
+    font-size: 0.9rem;
+}
+
+/* Колонки для списка дел */
+.todo-columns {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.todo-column {
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 20px;
+    padding: 15px;
+}
+
+.todo-column h4 {
+    text-align: center;
+    color: #5c6b7e;
+    margin-bottom: 15px;
+    font-weight: 400;
+    border-bottom: 2px solid rgba(168, 230, 207, 0.5);
+    padding-bottom: 5px;
+}
+
+/* Облако похвал */
+.praise-cloud {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 40px;
+    padding: 30px 20px;
+    min-height: 200px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    transition: all 0.3s;
+}
+
+.praise-item {
+    display: inline-block;
+    padding: 8px 15px;
+    border-radius: 50px;
+    background: rgba(255, 255, 255, 0.6);
+    color: #4a5b6b;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    transition: all 0.2s;
+    cursor: default;
+    animation: float 3s infinite alternate;
+}
+
+.praise-item:hover {
+    transform: scale(1.05);
+    background: rgba(255, 255, 255, 0.9);
+}
+
+@keyframes float {
+    from { transform: translateY(0px); }
+    to { transform: translateY(-5px); }
+}
+
+/* Женский календарь */
+.calendar-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    background: rgba(255, 255, 255, 0.4);
+    padding: 10px;
+    border-radius: 50px;
+}
+
+.calendar-nav button {
+    background: rgba(255, 255, 255, 0.8);
+    border: none;
+    padding: 8px 15px;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.calendar-nav button:hover {
+    background: #a8e6cf;
+}
+
+.female-calendar {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 20px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.female-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    font-weight: 500;
+    color: #7f8c8d;
+    margin-bottom: 10px;
+}
+
+.female-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+}
+
+.female-day {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 15px;
+    font-size: 1rem;
+    color: #2c3e50;
+    cursor: pointer;
+    transition: 0.2s;
+    position: relative;
+}
+
+.female-day:hover {
+    transform: scale(1.05);
+    background: rgba(255, 255, 255, 0.9);
+    z-index: 2;
+}
+
+.female-day.period {
+    background: #f8bbd0; /* яркий цвет месячных */
+    color: #880e4f;
+    font-weight: 600;
+}
+
+.female-day.predicted {
+    background: #fce4e4; /* бледный для предполагаемых */
+    color: #ab47bc;
+}
+
+.female-day.has-secret::after {
+    content: "•";
+    position: absolute;
+    bottom: 2px;
+    right: 5px;
+    font-size: 1.5rem;
+    color: #d81b60;
+    line-height: 1;
+}
+
+.female-day.empty {
+    background: transparent;
+    pointer-events: none;
+}
+
+.female-stats {
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 20px;
+    padding: 15px;
+    max-height: 200px;
+    overflow-y: auto;
+    font-size: 0.9rem;
+}
+
+.female-stats-item {
+    padding: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.3);
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Модальное окно */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 100;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.2);
+    backdrop-filter: blur(3px);
+}
+
+.modal-content {
+    background: rgba(255, 255, 255, 0.95);
+    margin: 10% auto;
+    padding: 25px;
+    border-radius: 30px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    position: relative;
+}
+
+.close {
+    position: absolute;
+    right: 20px;
+    top: 15px;
+    font-size: 28px;
+    cursor: pointer;
+    color: #aaa;
+}
+
+.close:hover {
+    color: #333;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+.modal-buttons button {
+    flex: 1;
+    background: #e0f2f1;
+    border: none;
+    padding: 10px;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.modal-buttons button:hover {
+    background: #a8e6cf;
+}
+
+.modal-field {
+    margin-bottom: 15px;
+}
+
+.modal-field label {
+    display: block;
+    margin-bottom: 5px;
+    color: #2c3e50;
+}
+
+.modal-field input[type="range"] {
+    width: 100%;
+}
+
+#stateValue {
+    display: inline-block;
+    margin-left: 10px;
+    font-weight: 600;
+}
+
+.modal button#saveDayData,
+.modal button#clearDayData {
+    background: #a8e6cf;
+    border: none;
+    padding: 12px;
+    border-radius: 40px;
+    width: 100%;
+    margin-top: 10px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.modal button#clearDayData {
+    background: #f8bbd0;
+    margin-top: 5px;
+}
+
+/* Кнопка очистки похвал */
+#clearPraises {
+    background: #f8bbd0;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 50px;
+    color: #880e4f;
+    font-weight: 500;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+/* Адаптивность */
+@media (max-width: 900px) {
+    .calendar-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .menu {
+        flex-direction: column;
+    }
+    
+    .menu-btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 700px) {
+    .todo-columns {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .modal-content {
+        margin: 5% auto;
+        padding: 15px;
+    }
+    .modal-buttons {
+        flex-direction: column;
+    }
+    .female-day {
+        font-size: 0.8rem;
+    }
+}
+
+
+/* Футер */
+.app-footer {
+    margin-top: 30px;
+    text-align: center;
+    padding: 20px;
+    border-top: 1px solid rgba(255,255,255,0.3);
+}
+
+.clear-all-btn {
+    background: #f8bbd0;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #880e4f;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 10px rgba(248, 187, 208, 0.4);
+}
+
+.clear-all-btn:hover {
+    background: #f48fb1;
+    transform: scale(1.02);
+}
+
+/* Стили для кнопок в модальном окне женского календаря (с суффиксом Female) */
+#markPeriodStartFemale,
+#markPeriodEndFemale {
+    flex: 1;
+    background: #e0f2f1;
+    border: none;
+    padding: 10px;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+#markPeriodStartFemale:hover,
+#markPeriodEndFemale:hover {
+    background: #a8e6cf;
+}
+
+#saveDayDataFemale,
+#clearDayDataFemale {
+    background: #a8e6cf;
+    border: none;
+    padding: 12px;
+    border-radius: 40px;
+    width: 100%;
+    margin-top: 10px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+#clearDayDataFemale {
+    background: #f8bbd0;
+    margin-top: 5px;
+}
+
+/* Стили для модального окна подтверждения (можно использовать существующие, но добавим для надёжности) */
+#clearAllModal .modal-buttons button {
+    flex: 1;
+    background: #e0f2f1;
+    border: none;
+    padding: 10px;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+#clearAllModal .modal-buttons button:hover {
+    background: #a8e6cf;
+}
+
+#clearAllModal .modal-buttons button#confirmClear {
+    background: #f8bbd0;
+    color: #880e4f;
+}
+
+#clearAllModal .modal-buttons button#confirmClear:hover {
+    background: #f48fb1;
+}
