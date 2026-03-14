@@ -2,35 +2,37 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="android-chrome-512x512" href="android-chrome-512x512.png">
-<link rel="android-chrome-192x192" href="android-chrome-192x192.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="android-chrome-512x512" href="android-chrome-512x512.png">
+    <link rel="android-chrome-192x192" href="android-chrome-192x192.png">
     <title>Личный органайзер</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="app">
         <nav class="menu">
-            <button class="menu-btn active" data-section="birthdays">Календарь дней рождений</button>
-            <button class="menu-btn" data-section="thoughts">Дневник мыслей</button>
-            <button class="menu-btn" data-section="books">Читательский дневник</button>
-            <button class="menu-btn" data-section="money">Денежный менеджер</button>
-            <button class="menu-btn" data-section="shopping">Список покупок</button>
-            <button class="menu-btn" data-section="todos">Список дел</button>
-            <button class="menu-btn" data-section="praise">Похвали себя</button>
-            <button class="menu-btn" data-section="female">Женский календарь</button>
+            <button class="menu-btn active" data-section="birthdays">🎂 Дни рождения</button>
+            <button class="menu-btn" data-section="thoughts">💭 Дневник мыслей</button>
+            <button class="menu-btn" data-section="books">📚 Читательский дневник</button>
+            <button class="menu-btn" data-section="money">💰 Денежный менеджер</button>
+            <button class="menu-btn" data-section="shopping">🛒 Список покупок</button>
+            <button class="menu-btn" data-section="todos">✅ Список дел</button>
+            <button class="menu-btn" data-section="praise">🌟 Похвали себя</button>
+            <button class="menu-btn" data-section="female">🌸 Женский календарь</button>
+            <button class="menu-btn" data-section="mood">😊 Трекер настроения</button>
         </nav>
 
         <main class="content">
-            <!-- Календарь дней рождений -->
+            <!-- Дни рождения -->
             <section id="birthdays" class="section active">
-                <h2>Календарь дней рождений</h2>
+                <h2>Дни рождения</h2>
                 <div class="add-form">
                     <input type="text" id="bName" placeholder="Имя">
                     <input type="date" id="bDate">
+                    <input type="number" id="bYear" placeholder="Год рождения (необязательно)" min="1900" max="2100">
                     <button id="addBirthday">Добавить</button>
                 </div>
                 <div class="calendar-container">
@@ -43,7 +45,12 @@
             <section id="thoughts" class="section">
                 <h2>Дневник мыслей</h2>
                 <div class="add-form">
-                    <textarea id="thoughtText" placeholder="Новая мысль..."></textarea>
+                    <textarea id="thoughtText" placeholder="Что у тебя на уме?"></textarea>
+                    <input type="text" id="thoughtTags" placeholder="Теги (через запятую)">
+                    <div class="file-upload">
+                        <label for="thoughtPhoto">📷 Фото (необязательно)</label>
+                        <input type="file" id="thoughtPhoto" accept="image/*">
+                    </div>
                     <button id="addThought">Записать</button>
                 </div>
                 <div class="entries" id="thoughtsList"></div>
@@ -59,6 +66,16 @@
                     <input type="text" id="bookGenre" placeholder="Жанр">
                     <textarea id="bookReview" placeholder="Отзыв"></textarea>
                     <textarea id="bookQuote" placeholder="Цитата"></textarea>
+                    <div class="rating">
+                        <span>Оценка: </span>
+                        <select id="bookRating">
+                            <option value="1">⭐ 1</option>
+                            <option value="2">⭐⭐ 2</option>
+                            <option value="3">⭐⭐⭐ 3</option>
+                            <option value="4">⭐⭐⭐⭐ 4</option>
+                            <option value="5" selected>⭐⭐⭐⭐⭐ 5</option>
+                        </select>
+                    </div>
                     <button id="addBook">Добавить книгу</button>
                 </div>
                 <div class="entries" id="booksList"></div>
@@ -69,7 +86,7 @@
                 <h2>Денежный менеджер</h2>
                 
                 <div class="subsection">
-                    <h3>Счета</h3>
+                    <h3>💰 Счета</h3>
                     <div class="add-form">
                         <input type="text" id="accountName" placeholder="Название счёта">
                         <button id="addAccount">Создать счёт</button>
@@ -78,7 +95,7 @@
                 </div>
 
                 <div class="subsection">
-                    <h3>Добавить операцию</h3>
+                    <h3>➕ Добавить операцию</h3>
                     <div class="add-form">
                         <select id="transactionAccount"></select>
                         <select id="transactionCategory">
@@ -98,8 +115,20 @@
                     </div>
                 </div>
 
+                <!-- Цель на месяц -->
                 <div class="subsection">
-                    <h3>Отчёты</h3>
+                    <h3>🎯 Цель на месяц</h3>
+                    <div class="add-form">
+                        <input type="number" id="monthlyGoal" placeholder="План расходов (₽)" min="0" step="100">
+                        <button id="setMonthlyGoal">Установить цель</button>
+                    </div>
+                    <div class="goal-progress" id="goalProgress">
+                        <!-- Динамически показываем план/факт -->
+                    </div>
+                </div>
+
+                <div class="subsection">
+                    <h3>📊 Отчёты</h3>
                     <div class="report-buttons">
                         <button id="report7days">За 7 дней</button>
                         <button id="report30days">За 30 дней</button>
@@ -108,7 +137,7 @@
                 </div>
 
                 <div class="subsection">
-                    <h3>История операций</h3>
+                    <h3>📜 История операций</h3>
                     <div class="entries" id="moneyList"></div>
                 </div>
             </section>
@@ -121,7 +150,7 @@
                     <input type="number" id="shoppingPrice" placeholder="Цена" step="0.01">
                     <button id="addShopping">Добавить</button>
                 </div>
-                <div class="shopping-summary">Общая сумма: <span id="shoppingTotal">0</span> ₽</div>
+                <div class="shopping-summary">Общая сумма выбранных: <span id="shoppingTotal">0</span> ₽</div>
                 <ul class="list" id="shoppingList"></ul>
             </section>
 
@@ -164,51 +193,97 @@
                 </div>
             </section>
 
-<!-- Женский календарь -->
-<section id="female" class="section">
-    <h2>Женский календарь</h2>
-    <div class="calendar-nav">
-        <button id="prevMonthFemale">&lt; Предыдущий</button>
-        <span id="currentMonthYearFemale"></span>
-        <button id="nextMonthFemale">Следующий &gt;</button>
-    </div>
-    <div id="femaleCalendar" class="female-calendar"></div>
-    <div id="femaleStats" class="female-stats"></div>
+            <!-- Женский календарь -->
+            <section id="female" class="section">
+                <h2>Женский календарь</h2>
+                <div class="calendar-nav">
+                    <button id="prevMonthFemale">&lt; Предыдущий</button>
+                    <span id="currentMonthYearFemale"></span>
+                    <button id="nextMonthFemale">Следующий &gt;</button>
+                </div>
+                <div id="femaleCalendar" class="female-calendar"></div>
+                <div id="femaleStats" class="female-stats"></div>
 
-    <!-- Модальное окно для ввода данных -->
-    <div id="dayModalFemale" class="modal">
-        <div class="modal-content">
-            <span class="close-female">&times;</span>
-            <h3 id="modalDateFemale"></h3>
-            <div class="modal-buttons">
-                <button id="markPeriodStartFemale">Начало месячных</button>
-                <button id="markPeriodEndFemale">Конец месячных</button>
-            </div>
-            <div class="modal-field">
-                <label>Состояние (1-10):</label>
-                <input type="range" id="dayStateFemale" min="1" max="10" step="1" value="5">
-                <span id="stateValueFemale">5</span>
-            </div>
-            <div class="modal-field">
-                <label>Заметка о самочувствии:</label>
-                <textarea id="dayNoteFemale" rows="3"></textarea>
-            </div>
-            <div class="modal-field">
-                <label>
-                    <input type="checkbox" id="daySecretFemale"> Тайна (половой контакт)
-                </label>
-            </div>
-            <button id="saveDayDataFemale">Сохранить</button>
-            <button id="clearDayDataFemale">Очистить день</button>
-        </div>
-    </div>
-</section>
+                <!-- Модальное окно для ввода данных -->
+                <div id="dayModalFemale" class="modal">
+                    <div class="modal-content">
+                        <span class="close-female">&times;</span>
+                        <h3 id="modalDateFemale"></h3>
+                        <div class="modal-buttons">
+                            <button id="markPeriodStartFemale">Начало месячных</button>
+                            <button id="markPeriodEndFemale">Конец месячных</button>
+                        </div>
+                        <div class="modal-field">
+                            <label>Состояние (1-10):</label>
+                            <input type="range" id="dayStateFemale" min="1" max="10" step="1" value="5">
+                            <span id="stateValueFemale">5</span>
+                        </div>
+                        <div class="modal-field">
+                            <label>Симптомы / иконки (например: 😴, 😫, 🤕):</label>
+                            <input type="text" id="daySymptomsFemale" placeholder="😴 😫 🤕">
+                        </div>
+                        <div class="modal-field">
+                            <label>Заметка:</label>
+                            <textarea id="dayNoteFemale" rows="2"></textarea>
+                        </div>
+                        <div class="modal-field">
+                            <label>
+                                <input type="checkbox" id="daySecretFemale"> Тайна (половой контакт)
+                            </label>
+                        </div>
+                        <button id="saveDayDataFemale">Сохранить</button>
+                        <button id="clearDayDataFemale">Очистить день</button>
+                    </div>
+                </div>
+            </section>
 
-        <!-- Футер с кнопкой очистки -->
+            <!-- Трекер настроения -->
+            <section id="mood" class="section">
+                <h2>Трекер настроения</h2>
+                <div class="add-form">
+                    <input type="date" id="moodDate" value="">
+                    <div class="mood-slider">
+                        <label>Оценка настроения: <span id="moodValue">5</span></label>
+                        <input type="range" id="moodRating" min="1" max="10" step="1" value="5">
+                    </div>
+                    <textarea id="moodGood" placeholder="Что хорошего?"></textarea>
+                    <textarea id="moodBad" placeholder="Что плохого?"></textarea>
+                    <button id="addMood">Записать</button>
+                </div>
+
+                <div class="mood-stats">
+                    <h3>Статистика</h3>
+                    <div class="mood-chart-container">
+                        <canvas id="moodChart" width="200" height="200"></canvas>
+                    </div>
+                    <div class="mood-entries" id="moodEntries"></div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Футер с кнопками -->
         <footer class="app-footer">
             <button id="clearAllBtn" class="clear-all-btn">Очистить все данные</button>
+            <button id="themeSettingsBtn" class="theme-settings-btn">Настройки оформления</button>
+            <button id="backupBtn" class="backup-btn">💾 Скачать бэкап</button>
+            <button id="restoreBtn" class="restore-btn">📂 Восстановить из бэкапа</button>
         </footer>
-    </div> <!-- закрытие .app -->
+    </div>
+
+    <!-- Модальное окно выбора темы -->
+    <div id="themeModal" class="modal">
+        <div class="modal-content">
+            <span class="close-theme">&times;</span>
+            <h3>Выберите цветовую тему</h3>
+            <div class="theme-options">
+                <div class="theme-option" data-theme="green" style="background: #a8e6cf;">Зелёная</div>
+                <div class="theme-option" data-theme="pink" style="background: #f8bbd0;">Розовая</div>
+                <div class="theme-option" data-theme="blue" style="background: #b3e5fc;">Голубая</div>
+                <div class="theme-option" data-theme="lavender" style="background: #e1bee7;">Лавандовая</div>
+                <div class="theme-option" data-theme="peach" style="background: #ffccbc;">Персиковая</div>
+            </div>
+        </div>
+    </div>
 
     <!-- Модальное окно подтверждения очистки -->
     <div id="clearAllModal" class="modal">
@@ -222,8 +297,10 @@
             </div>
         </div>
     </div>
-        </main>
-    </div>
+
+    <!-- Скрытый input для восстановления -->
+    <input type="file" id="restoreFile" accept=".json" style="display: none;">
+
     <script src="script.js"></script>
 </body>
 </html>
