@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Переключение разделов
+    // ========== ПЕРЕКЛЮЧЕНИЕ РАЗДЕЛОВ ==========
     const menuBtns = document.querySelectorAll('.menu-btn');
     const sections = document.querySelectorAll('.section');
 
@@ -13,7 +13,73 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // ========== КАЛЕНДАРЬ ДНЕЙ РОЖДЕНИЙ ==========
+    // ========== КАСТОМИЗАЦИЯ ЦВЕТОВ (ТЕМЫ) ==========
+    const themeModal = document.getElementById('themeModal');
+    const themeSettingsBtn = document.getElementById('themeSettingsBtn');
+    const closeTheme = document.querySelector('.close-theme');
+    const themeOptions = document.querySelectorAll('.theme-option');
+
+    // Загрузка сохранённой темы
+    const savedTheme = localStorage.getItem('theme') || 'green';
+    setTheme(savedTheme);
+
+    if (themeSettingsBtn) {
+        themeSettingsBtn.addEventListener('click', () => {
+            themeModal.style.display = 'block';
+        });
+    }
+
+    if (closeTheme) {
+        closeTheme.addEventListener('click', () => {
+            themeModal.style.display = 'none';
+        });
+    }
+
+    window.addEventListener('click', (e) => {
+        if (e.target === themeModal) themeModal.style.display = 'none';
+    });
+
+    themeOptions.forEach(opt => {
+        opt.addEventListener('click', () => {
+            const theme = opt.dataset.theme;
+            setTheme(theme);
+            localStorage.setItem('theme', theme);
+            themeModal.style.display = 'none';
+        });
+    });
+
+    function setTheme(theme) {
+        const root = document.documentElement;
+        const themes = {
+            green: ['#a8e6cf', '#d4f3e3', '#f8bbd0', '#fce4e4', '#e0f2f1'],
+            pink: ['#f8bbd0', '#fce4e9', '#a8e6cf', '#ffe0f0', '#ffe0b5'],
+            blue: ['#b3e5fc', '#e1f5fe', '#ffccbc', '#e1f5fe', '#fff9c4'],
+            lavender: ['#e1bee7', '#f3e5f5', '#c8e6c9', '#ede7f6', '#e0f2f1'],
+            peach: ['#ffccbc', '#ffe4d6', '#ffe0b2', '#ffecdd', '#fff3e0']
+        };
+        const [primary, primaryLight, secondary, gradStart, gradEnd] = themes[theme];
+        root.style.setProperty('--primary-color', primary);
+        root.style.setProperty('--primary-light', primaryLight);
+        root.style.setProperty('--secondary-color', secondary);
+        root.style.setProperty('--gradient-start', gradStart);
+        root.style.setProperty('--gradient-end', gradEnd);
+    }
+
+    // ========== ОТПРАВКА ПО ENTER (кроме textarea) ==========
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey && e.target.tagName !== 'TEXTAREA') {
+            const form = e.target.closest('.add-form');
+            if (form) {
+                const btn = form.querySelector('button[type="button"]');
+                if (btn) {
+                    e.preventDefault();
+                    btn.click();
+                }
+            }
+        }
+    });
+
+    // ========== КАЛЕНДАРЬ ДНЕЙ РОЖДЕНИЙ С ВОЗРАСТОМ ==========
     let birthdays = JSON.parse(localStorage.getItem('birthdays')) || [];
 
     function renderCalendar() {
@@ -31,6 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const year = date.getFullYear();
         const firstDay = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const today = new Date();
 
         let html = `<h3>${monthNames[month]} ${year}</h3>`;
         html += '<div class="weekdays"><span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span></div>';
@@ -43,9 +110,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         for (let d = 1; d <= daysInMonth; d++) {
             const dateStr = `${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-            const bdays = birthdays.filter(b => b.date === dateStr).map(b => b.name).join(', ');
+            const bdays = birthdays.filter(b => b.date === dateStr).map(b => {
+                let age = '';
+                if (b.year) {
+                    const currentYear = today.getFullYear();
+                    const hadBirthday = (today.getMonth() + 1 > month) || (today.getMonth() + 1 === month && today.getDate() >= d);
+                    age = ` (${currentYear - b.year - (hadBirthday ? 0 : 1)} лет)`;
+                }
+                return b.name + age;
+            }).join(', ');
             const hasBirthday = bdays.length > 0;
-            html += `<div class="day-cell ${hasBirthday ? 'birthday' : ''}" data-names="${bdays}">${d}</div>`;
+            const isToday = (month === today.getMonth() && d === today.getDate() && year === today.getFullYear());
+            html += `<div class="day-cell ${hasBirthday ? 'birthday' : ''} ${isToday ? 'today' : ''}" data-names="${bdays}">${d}</div>`;
         }
 
         html += '</div>';
@@ -55,20 +131,22 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('addBirthday').addEventListener('click', () => {
         const name = document.getElementById('bName').value.trim();
         const date = document.getElementById('bDate').value;
+        const year = parseInt(document.getElementById('bYear').value);
         if (!name || !date) return;
 
-        const [year, month, day] = date.split('-');
-        const dateStr = `${month}-${day}`;
-        birthdays.push({ name, date: dateStr });
+        const [y, m, d] = date.split('-');
+        const dateStr = `${m}-${d}`;
+        birthdays.push({ name, date: dateStr, year: isNaN(year) ? null : year });
         localStorage.setItem('birthdays', JSON.stringify(birthdays));
         renderCalendar();
         document.getElementById('bName').value = '';
         document.getElementById('bDate').value = '';
+        document.getElementById('bYear').value = '';
     });
 
     renderCalendar();
 
-    // ========== ДНЕВНИК МЫСЛЕЙ ==========
+    // ========== ДНЕВНИК МЫСЛЕЙ С ТЕГАМИ И ФОТО ==========
     let thoughts = JSON.parse(localStorage.getItem('thoughts')) || [];
 
     function renderThoughts() {
@@ -79,7 +157,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     <small>${new Date(t.date).toLocaleString()}</small>
                     <button class="delete-btn" onclick="deleteThought('${t.id}')">×</button>
                 </div>
-                <p>${t.text}</p>
+                <div class="thought-entry">
+                    ${t.photo ? `<img src="${t.photo}" class="thought-photo" alt="photo">` : ''}
+                    <div class="thought-content">
+                        <p>${t.text}</p>
+                        ${t.tags ? `<div class="thought-tags">${t.tags.split(',').map(tag => `<span class="thought-tag">#${tag.trim()}</span>`).join('')}</div>` : ''}
+                    </div>
+                </div>
             </div>
         `).join('');
     }
@@ -92,21 +176,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('addThought').addEventListener('click', () => {
         const text = document.getElementById('thoughtText').value.trim();
+        const tags = document.getElementById('thoughtTags').value.trim();
+        const photoInput = document.getElementById('thoughtPhoto');
         if (!text) return;
-        const newThought = {
-            id: Date.now().toString(),
-            text,
-            date: new Date().toISOString()
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const newThought = {
+                id: Date.now().toString(),
+                text,
+                tags: tags || '',
+                photo: e.target.result || null,
+                date: new Date().toISOString()
+            };
+            thoughts.unshift(newThought);
+            localStorage.setItem('thoughts', JSON.stringify(thoughts));
+            renderThoughts();
+            document.getElementById('thoughtText').value = '';
+            document.getElementById('thoughtTags').value = '';
+            document.getElementById('thoughtPhoto').value = '';
         };
-        thoughts.unshift(newThought);
-        localStorage.setItem('thoughts', JSON.stringify(thoughts));
-        renderThoughts();
-        document.getElementById('thoughtText').value = '';
+        if (photoInput.files[0]) {
+            reader.readAsDataURL(photoInput.files[0]);
+        } else {
+            reader.onload({ target: { result: null } });
+        }
     });
 
     renderThoughts();
 
-    // ========== ЧИТАТЕЛЬСКИЙ ДНЕВНИК ==========
+    // ========== ЧИТАТЕЛЬСКИЙ ДНЕВНИК СО ЗВЁЗДАМИ ==========
     let books = JSON.parse(localStorage.getItem('books')) || [];
 
     function renderBooks() {
@@ -118,6 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <button class="delete-btn" onclick="deleteBook('${b.id}')">×</button>
                 </div>
                 <p><em>${b.author}</em> (${b.year}) · ${b.genre}</p>
+                <p class="book-rating">${'⭐'.repeat(b.rating)}</p>
                 <p><strong>Отзыв:</strong> ${b.review}</p>
                 <p><strong>Цитата:</strong> “${b.quote}”</p>
             </div>
@@ -137,11 +237,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const genre = document.getElementById('bookGenre').value.trim();
         const review = document.getElementById('bookReview').value.trim();
         const quote = document.getElementById('bookQuote').value.trim();
+        const rating = parseInt(document.getElementById('bookRating').value);
         if (!title || !author || !year || !genre || !review || !quote) return;
 
         const newBook = {
             id: Date.now().toString(),
-            title, author, year, genre, review, quote
+            title, author, year, genre, review, quote, rating
         };
         books.unshift(newBook);
         localStorage.setItem('books', JSON.stringify(books));
@@ -151,22 +252,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     renderBooks();
 
-    // ========== ДЕНЕЖНЫЙ МЕНЕДЖЕР ==========
+    // ========== ДЕНЕЖНЫЙ МЕНЕДЖЕР С ЦЕЛЬЮ НА МЕСЯЦ ==========
     let accounts = JSON.parse(localStorage.getItem('accounts')) || [];
     let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+    let monthlyGoal = parseFloat(localStorage.getItem('monthlyGoal')) || 0;
 
     const categories = ['food', 'transport', 'household', 'holidays', 'other'];
     const categoryNames = {
         food: 'Еда', transport: 'Передвижение', household: 'Быт', holidays: 'Праздники', other: 'Другое'
     };
 
-    function saveAccounts() {
-        localStorage.setItem('accounts', JSON.stringify(accounts));
-    }
-
-    function saveTransactions() {
-        localStorage.setItem('transactions', JSON.stringify(transactions));
-    }
+    function saveAccounts() { localStorage.setItem('accounts', JSON.stringify(accounts)); }
+    function saveTransactions() { localStorage.setItem('transactions', JSON.stringify(transactions)); }
 
     function renderAccounts() {
         const container = document.getElementById('accountsList');
@@ -201,12 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('addAccount').addEventListener('click', () => {
         const name = document.getElementById('accountName').value.trim();
         if (!name) return;
-        const newAccount = {
-            id: Date.now().toString(),
-            name,
-            balance: 0
-        };
-        accounts.push(newAccount);
+        accounts.push({ id: Date.now().toString(), name, balance: 0 });
         saveAccounts();
         renderAccounts();
         document.getElementById('accountName').value = '';
@@ -247,6 +339,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderMoneyList();
         document.getElementById('transactionAmount').value = '';
         document.getElementById('transactionDesc').value = '';
+        updateGoalProgress();
     });
 
     function renderMoneyList() {
@@ -285,7 +378,36 @@ document.addEventListener('DOMContentLoaded', () => {
         saveTransactions();
         renderAccounts();
         renderMoneyList();
+        updateGoalProgress();
     };
+
+    // Цель на месяц
+    function updateGoalProgress() {
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const monthExpenses = transactions
+            .filter(t => t.type === 'expense' && new Date(t.date) >= startOfMonth)
+            .reduce((sum, t) => sum + t.amount, 0);
+        const goal = monthlyGoal || 0;
+        const percent = goal > 0 ? Math.min(100, (monthExpenses / goal) * 100) : 0;
+        const progressDiv = document.getElementById('goalProgress');
+        if (progressDiv) {
+            progressDiv.innerHTML = `
+                <div>Цель на месяц: ${goal} ₽</div>
+                <div>Потрачено: ${monthExpenses.toFixed(2)} ₽</div>
+                <progress value="${percent}" max="100"></progress>
+            `;
+        }
+    }
+
+    document.getElementById('setMonthlyGoal').addEventListener('click', () => {
+        const goal = parseFloat(document.getElementById('monthlyGoal').value);
+        if (!isNaN(goal) && goal >= 0) {
+            monthlyGoal = goal;
+            localStorage.setItem('monthlyGoal', goal);
+            updateGoalProgress();
+        }
+    });
 
     function generateReport(days) {
         const cutoff = new Date();
@@ -315,7 +437,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         let html = `<h4>Отчёт за последние ${days} дней</h4>`;
-
         html += '<h5>По счетам:</h5><table>';
         accounts.forEach(a => {
             const inc = accountSummary[a.id].income;
@@ -323,7 +444,6 @@ document.addEventListener('DOMContentLoaded', () => {
             html += `<tr><td>${a.name}:</td><td>доход ${inc} ₽</td><td>расход ${exp} ₽</td></tr>`;
         });
         html += '</table>';
-
         html += `<p><strong>Общий доход:</strong> ${totalIncome} ₽</p>`;
         html += `<p><strong>Общий расход:</strong> ${totalExpense} ₽</p>`;
 
@@ -340,7 +460,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             html += '<p>Нет расходов за период.</p>';
         }
-
         document.getElementById('reportResult').innerHTML = html;
     }
 
@@ -349,17 +468,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     renderAccounts();
     renderMoneyList();
+    updateGoalProgress();
 
-    // ========== СПИСОК ПОКУПОК ==========
+    // ========== СПИСОК ПОКУПОК С ЧЕКБОКСАМИ ==========
     let shopping = JSON.parse(localStorage.getItem('shopping')) || [];
 
     function renderShopping() {
         const list = document.getElementById('shoppingList');
         let total = 0;
         list.innerHTML = shopping.map(item => {
-            total += item.price || 0;
+            const checked = item.checked ? 'checked' : '';
+            if (item.checked) total += item.price || 0;
             return `
                 <li>
+                    <input type="checkbox" class="shopping-item-checkbox" data-id="${item.id}" ${checked} onchange="toggleShoppingItem('${item.id}')">
                     <span class="item-text">${item.name}</span>
                     <span class="item-price">${item.price ? item.price.toFixed(2) + ' ₽' : ''}</span>
                     <button class="delete-item" onclick="deleteShopping('${item.id}')">×</button>
@@ -368,6 +490,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }).join('');
         document.getElementById('shoppingTotal').textContent = total.toFixed(2);
     }
+
+    window.toggleShoppingItem = (id) => {
+        shopping = shopping.map(i => i.id === id ? { ...i, checked: !i.checked } : i);
+        localStorage.setItem('shopping', JSON.stringify(shopping));
+        renderShopping();
+    };
 
     window.deleteShopping = (id) => {
         shopping = shopping.filter(i => i.id !== id);
@@ -379,12 +507,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const name = document.getElementById('shoppingItem').value.trim();
         const price = parseFloat(document.getElementById('shoppingPrice').value);
         if (!name) return;
-        const newItem = {
+        shopping.push({
             id: Date.now().toString(),
             name,
-            price: isNaN(price) ? 0 : price
-        };
-        shopping.push(newItem);
+            price: isNaN(price) ? 0 : price,
+            checked: false
+        });
         localStorage.setItem('shopping', JSON.stringify(shopping));
         renderShopping();
         document.getElementById('shoppingItem').value = '';
@@ -393,29 +521,116 @@ document.addEventListener('DOMContentLoaded', () => {
 
     renderShopping();
 
-    // ========== СПИСОК ДЕЛ ==========
+    // ========== СПИСОК ДЕЛ С DRAG & DROP ==========
     let todos = JSON.parse(localStorage.getItem('todos')) || [];
 
     function renderTodos() {
         const dayList = document.getElementById('todoDayList');
         const weekList = document.getElementById('todoWeekList');
         const monthList = document.getElementById('todoMonthList');
-
         dayList.innerHTML = '';
         weekList.innerHTML = '';
         monthList.innerHTML = '';
 
-        todos.forEach(todo => {
+        const sorted = [...todos].sort((a, b) => (a.order || 0) - (b.order || 0));
+
+        sorted.forEach(todo => {
             const li = document.createElement('li');
+            li.setAttribute('draggable', 'true');
+            li.dataset.id = todo.id;
+            li.dataset.urgency = todo.urgency;
             li.innerHTML = `
                 <input type="checkbox" ${todo.done ? 'checked' : ''} onchange="toggleTodo('${todo.id}')">
                 <span class="item-text" style="${todo.done ? 'text-decoration: line-through; opacity:0.6' : ''}">${todo.text}</span>
                 <button class="delete-item" onclick="deleteTodo('${todo.id}')">×</button>
             `;
+            li.addEventListener('dragstart', handleDragStart);
+            li.addEventListener('dragend', handleDragEnd);
+
             if (todo.urgency === 'day') dayList.appendChild(li);
             else if (todo.urgency === 'week') weekList.appendChild(li);
             else if (todo.urgency === 'month') monthList.appendChild(li);
         });
+
+        [dayList, weekList, monthList].forEach(list => {
+            list.addEventListener('dragover', handleDragOver);
+            list.addEventListener('dragleave', handleDragLeave);
+            list.addEventListener('drop', handleDrop);
+        });
+    }
+
+    let draggedItem = null;
+
+    function handleDragStart(e) {
+        draggedItem = this;
+        this.classList.add('dragging');
+        e.dataTransfer.setData('text/plain', this.dataset.id);
+        e.dataTransfer.effectAllowed = 'move';
+    }
+
+    function handleDragEnd(e) {
+        this.classList.remove('dragging');
+        document.querySelectorAll('.todo-column').forEach(col => col.classList.remove('drag-over'));
+    }
+
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        this.closest('.todo-column').classList.add('drag-over');
+    }
+
+    function handleDragLeave(e) {
+        this.closest('.todo-column').classList.remove('drag-over');
+    }
+
+    function handleDrop(e) {
+        e.preventDefault();
+        const targetList = this;
+        targetList.closest('.todo-column').classList.remove('drag-over');
+
+        const draggedId = e.dataTransfer.getData('text/plain');
+        const draggedElement = draggedItem;
+        if (!draggedElement) return;
+
+        let newUrgency = 'day';
+        if (targetList.id === 'todoWeekList') newUrgency = 'week';
+        else if (targetList.id === 'todoMonthList') newUrgency = 'month';
+
+        const afterElement = getDragAfterElement(targetList, e.clientY);
+        const draggedTodo = todos.find(t => t.id === draggedId);
+        if (!draggedTodo) return;
+
+        const oldUrgency = draggedTodo.urgency;
+        if (oldUrgency === newUrgency) {
+            // Перестановка внутри колонки
+            const sameUrgency = todos.filter(t => t.urgency === oldUrgency).sort((a, b) => a.order - b.order);
+            const filtered = sameUrgency.filter(t => t.id !== draggedId);
+            let newIndex = afterElement ? filtered.findIndex(t => t.id === afterElement.dataset.id) : filtered.length;
+            filtered.splice(newIndex, 0, draggedTodo);
+            filtered.forEach((t, idx) => t.order = idx);
+        } else {
+            // Перемещение между колонками
+            draggedTodo.urgency = newUrgency;
+            const targetUrgency = todos.filter(t => t.urgency === newUrgency).sort((a, b) => a.order - b.order);
+            const newIndex = afterElement ? targetUrgency.findIndex(t => t.id === afterElement.dataset.id) : targetUrgency.length;
+            targetUrgency.splice(newIndex, 0, draggedTodo);
+            targetUrgency.forEach((t, idx) => t.order = idx);
+            // Пересчёт исходной колонки
+            const oldUrgencyTodos = todos.filter(t => t.urgency === oldUrgency && t.id !== draggedId).sort((a, b) => a.order - b.order);
+            oldUrgencyTodos.forEach((t, idx) => t.order = idx);
+        }
+
+        localStorage.setItem('todos', JSON.stringify(todos));
+        renderTodos();
+    }
+
+    function getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('li:not(.dragging)')];
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            return (offset < 0 && offset > closest.offset) ? { offset, element: child } : closest;
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
 
     window.toggleTodo = (id) => {
@@ -425,7 +640,13 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.deleteTodo = (id) => {
-        todos = todos.filter(t => t.id !== id);
+        const deleted = todos.find(t => t.id === id);
+        if (deleted) {
+            const oldUrgency = deleted.urgency;
+            todos = todos.filter(t => t.id !== id);
+            const sameUrgency = todos.filter(t => t.urgency === oldUrgency).sort((a, b) => a.order - b.order);
+            sameUrgency.forEach((t, idx) => t.order = idx);
+        }
         localStorage.setItem('todos', JSON.stringify(todos));
         renderTodos();
     };
@@ -434,11 +655,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const text = document.getElementById('todoItem').value.trim();
         const urgency = document.getElementById('todoUrgency').value;
         if (!text) return;
+        const maxOrder = todos.filter(t => t.urgency === urgency).reduce((max, t) => Math.max(max, t.order || 0), -1) + 1;
         const newTodo = {
             id: Date.now().toString(),
             text,
             urgency,
-            done: false
+            done: false,
+            order: maxOrder
         };
         todos.push(newTodo);
         localStorage.setItem('todos', JSON.stringify(todos));
@@ -454,20 +677,19 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderPraises() {
         const cloud = document.getElementById('praiseCloud');
         cloud.innerHTML = praises.map(p => {
-            const fontSize = 0.8 + Math.random() * 1.2;
+            const fontSize = 0.8 + Math.random() * 1.5;
             const opacity = 0.6 + Math.random() * 0.4;
-            return `<span class="praise-item" style="font-size: ${fontSize}rem; opacity: ${opacity};">${p.text}</span>`;
+            const top = Math.random() * 85;
+            const left = Math.random() * 85;
+            const rotate = (Math.random() - 0.5) * 20;
+            return `<span class="praise-item" style="font-size: ${fontSize}rem; opacity: ${opacity}; top: ${top}%; left: ${left}%; transform: rotate(${rotate}deg);">${p.text}</span>`;
         }).join('');
     }
 
     document.getElementById('addPraise').addEventListener('click', () => {
         const text = document.getElementById('praiseInput').value.trim();
         if (!text) return;
-        const newPraise = {
-            id: Date.now().toString(),
-            text
-        };
-        praises.push(newPraise);
+        praises.push({ id: Date.now().toString(), text });
         localStorage.setItem('praises', JSON.stringify(praises));
         renderPraises();
         document.getElementById('praiseInput').value = '';
@@ -483,335 +705,369 @@ document.addEventListener('DOMContentLoaded', () => {
 
     renderPraises();
 
-// ========== ЖЕНСКИЙ КАЛЕНДАРЬ (ПЕРЕПИСАН) ==========
-(function() {
-    // Данные
-    let periods = JSON.parse(localStorage.getItem('femalePeriods')) || [];
-    let dayData = JSON.parse(localStorage.getItem('femaleDayData')) || {};
+    // ========== ЖЕНСКИЙ КАЛЕНДАРЬ С СИМПТОМАМИ ==========
+    (function() {
+        let periods = JSON.parse(localStorage.getItem('femalePeriods')) || [];
+        let dayData = JSON.parse(localStorage.getItem('femaleDayData')) || {};
 
-    // Константы
-    const PREDICTED_WINDOW = 2; // дни до и после предполагаемого начала
-    const MAX_CYCLE_HISTORY = 6; // сколько последних циклов учитывать для прогноза
+        const PREDICTED_WINDOW = 2;
+        const MAX_CYCLE_HISTORY = 6;
+        let currentDisplayDate = new Date();
+        currentDisplayDate.setDate(1);
 
-    // Текущая отображаемая дата (первое число месяца)
-    let currentDisplayDate = new Date();
-    currentDisplayDate.setDate(1); // всегда первое число
+        const femaleCalendar = document.getElementById('femaleCalendar');
+        const femaleStats = document.getElementById('femaleStats');
+        const currentMonthYearSpan = document.getElementById('currentMonthYearFemale');
+        const prevMonthBtn = document.getElementById('prevMonthFemale');
+        const nextMonthBtn = document.getElementById('nextMonthFemale');
 
-    // Элементы DOM
-    const femaleCalendar = document.getElementById('femaleCalendar');
-    const femaleStats = document.getElementById('femaleStats');
-    const currentMonthYearSpan = document.getElementById('currentMonthYearFemale');
-    const prevMonthBtn = document.getElementById('prevMonthFemale');
-    const nextMonthBtn = document.getElementById('nextMonthFemale');
+        const modal = document.getElementById('dayModalFemale');
+        const modalDateEl = document.getElementById('modalDateFemale');
+        const closeModalBtn = document.querySelector('.close-female');
+        const markPeriodStartBtn = document.getElementById('markPeriodStartFemale');
+        const markPeriodEndBtn = document.getElementById('markPeriodEndFemale');
+        const dayStateInput = document.getElementById('dayStateFemale');
+        const stateValueSpan = document.getElementById('stateValueFemale');
+        const daySymptomsInput = document.getElementById('daySymptomsFemale');
+        const dayNoteTextarea = document.getElementById('dayNoteFemale');
+        const daySecretCheckbox = document.getElementById('daySecretFemale');
+        const saveDayDataBtn = document.getElementById('saveDayDataFemale');
+        const clearDayDataBtn = document.getElementById('clearDayDataFemale');
+        let selectedDate = null;
 
-    // Модальное окно
-    const modal = document.getElementById('dayModalFemale');
-    const modalDateEl = document.getElementById('modalDateFemale');
-    const closeModalBtn = document.querySelector('.close-female');
-    const markPeriodStartBtn = document.getElementById('markPeriodStartFemale');
-    const markPeriodEndBtn = document.getElementById('markPeriodEndFemale');
-    const dayStateInput = document.getElementById('dayStateFemale');
-    const stateValueSpan = document.getElementById('stateValueFemale');
-    const dayNoteTextarea = document.getElementById('dayNoteFemale');
-    const daySecretCheckbox = document.getElementById('daySecretFemale');
-    const saveDayDataBtn = document.getElementById('saveDayDataFemale');
-    const clearDayDataBtn = document.getElementById('clearDayDataFemale');
+        function savePeriods() { localStorage.setItem('femalePeriods', JSON.stringify(periods)); }
+        function saveDayData() { localStorage.setItem('femaleDayData', JSON.stringify(dayData)); }
 
-    // Выбранная дата (строка YYYY-MM-DD)
-    let selectedDate = null;
-
-    // Вспомогательные функции сохранения
-    function savePeriods() {
-        localStorage.setItem('femalePeriods', JSON.stringify(periods));
-    }
-
-    function saveDayData() {
-        localStorage.setItem('femaleDayData', JSON.stringify(dayData));
-    }
-
-    // Вычисление средней длины цикла по последним завершённым циклам
-    function getAverageCycleLength() {
-        const completedPeriods = periods.filter(p => p.start && p.end).sort((a, b) => new Date(a.start) - new Date(b.start));
-        if (completedPeriods.length < 2) return 28; // стандартный цикл
-
-        const recent = completedPeriods.slice(-MAX_CYCLE_HISTORY);
-        let totalDays = 0;
-        for (let i = 1; i < recent.length; i++) {
-            const prevStart = new Date(recent[i-1].start);
-            const currStart = new Date(recent[i].start);
-            const diff = Math.round((currStart - prevStart) / (1000 * 60 * 60 * 24));
-            totalDays += diff;
-        }
-        return Math.round(totalDays / (recent.length - 1));
-    }
-
-    // Получить дату следующего предполагаемого начала месячных
-    function getNextPredictedStart() {
-        const starts = periods.map(p => p.start).filter(s => s).sort((a, b) => new Date(a) - new Date(b));
-        if (starts.length === 0) return null;
-        const lastStart = new Date(starts[starts.length - 1]);
-        const avgCycle = getAverageCycleLength();
-        const next = new Date(lastStart);
-        next.setDate(lastStart.getDate() + avgCycle);
-        return next.toISOString().split('T')[0];
-    }
-
-    // Получить массив предполагаемых дат (около predictedStart)
-    function getPredictedDates() {
-        const predictedStart = getNextPredictedStart();
-        if (!predictedStart) return [];
-        const startDate = new Date(predictedStart);
-        const result = [];
-        for (let offset = -PREDICTED_WINDOW; offset <= PREDICTED_WINDOW; offset++) {
-            const d = new Date(startDate);
-            d.setDate(startDate.getDate() + offset);
-            result.push(d.toISOString().split('T')[0]);
-        }
-        return result;
-    }
-
-    // Проверка, является ли дата днём месячных (находится внутри какого-либо периода)
-    function isDateInPeriod(dateStr) {
-        const date = new Date(dateStr);
-        for (let p of periods) {
-            if (!p.start) continue;
-            const start = new Date(p.start);
-            const end = p.end ? new Date(p.end) : null;
-            if (!end) {
-                // Незакрытый период — считаем, что все дни от start до сегодня включительно
-                if (date >= start && date <= new Date()) return true;
-            } else {
-                if (date >= start && date <= end) return true;
+        function getAverageCycleLength() {
+            const completed = periods.filter(p => p.start && p.end).sort((a,b) => new Date(a.start) - new Date(b.start));
+            if (completed.length < 2) return 28;
+            const recent = completed.slice(-MAX_CYCLE_HISTORY);
+            let total = 0;
+            for (let i=1; i<recent.length; i++) {
+                total += Math.round((new Date(recent[i].start) - new Date(recent[i-1].start)) / 86400000);
             }
-        }
-        return false;
-    }
-
-    // Рендер календаря
-    function renderFemaleCalendar() {
-        const year = currentDisplayDate.getFullYear();
-        const month = currentDisplayDate.getMonth();
-        const firstDay = new Date(year, month, 1);
-        const lastDay = new Date(year, month + 1, 0);
-        const daysInMonth = lastDay.getDate();
-
-        // День недели первого дня (0 = вс, 1 = пн ... 6 = сб)
-        let firstDayWeek = firstDay.getDay();
-        // Нам нужно, чтобы понедельник был 0
-        let startOffset = firstDayWeek === 0 ? 6 : firstDayWeek - 1;
-
-        // Заголовок с месяцем и годом
-        const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
-        currentMonthYearSpan.textContent = `${monthNames[month]} ${year}`;
-
-        // Получаем предполагаемые даты
-        const predictedDates = getPredictedDates();
-
-        let html = '<div class="female-weekdays"><span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span></div>';
-        html += '<div class="female-days">';
-
-        // Пустые ячейки до первого дня месяца
-        for (let i = 0; i < startOffset; i++) {
-            html += '<div class="female-day empty"></div>';
+            return Math.round(total / (recent.length - 1));
         }
 
-        // Ячейки дней месяца
-        for (let d = 1; d <= daysInMonth; d++) {
-            const dateStr = `${year}-${String(month+1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-            let classes = 'female-day';
-            if (isDateInPeriod(dateStr)) {
-                classes += ' period';
-            } else if (predictedDates.includes(dateStr)) {
-                classes += ' predicted';
+        function getNextPredictedStart() {
+            const starts = periods.map(p => p.start).filter(s => s).sort((a,b) => new Date(a) - new Date(b));
+            if (!starts.length) return null;
+            const last = new Date(starts[starts.length-1]);
+            last.setDate(last.getDate() + getAverageCycleLength());
+            return last.toISOString().split('T')[0];
+        }
+
+        function getPredictedDates() {
+            const pred = getNextPredictedStart();
+            if (!pred) return [];
+            const d = new Date(pred);
+            const res = [];
+            for (let i=-PREDICTED_WINDOW; i<=PREDICTED_WINDOW; i++) {
+                const nd = new Date(d);
+                nd.setDate(d.getDate()+i);
+                res.push(nd.toISOString().split('T')[0]);
             }
-            if (dayData[dateStr] && dayData[dateStr].secret) {
-                classes += ' has-secret';
-            }
-            html += `<div class="${classes}" data-date="${dateStr}">${d}</div>`;
+            return res;
         }
 
-        html += '</div>';
-        femaleCalendar.innerHTML = html;
+        function isDateInPeriod(dateStr) {
+            const date = new Date(dateStr);
+            for (let p of periods) {
+                if (!p.start) continue;
+                const start = new Date(p.start);
+                const end = p.end ? new Date(p.end) : null;
+                if (!end) {
+                    if (date >= start && date <= new Date()) return true;
+                } else {
+                    if (date >= start && date <= end) return true;
+                }
+            }
+            return false;
+        }
 
-        // Добавляем обработчики на дни
-        document.querySelectorAll('.female-day[data-date]').forEach(day => {
-            day.addEventListener('click', () => openDayModal(day.dataset.date));
+        function renderFemaleCalendar() {
+            const year = currentDisplayDate.getFullYear();
+            const month = currentDisplayDate.getMonth();
+            const firstDay = new Date(year, month, 1);
+            const daysInMonth = new Date(year, month+1, 0).getDate();
+            let firstDayWeek = firstDay.getDay();
+            let startOffset = firstDayWeek === 0 ? 6 : firstDayWeek - 1;
+            const monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+            currentMonthYearSpan.textContent = `${monthNames[month]} ${year}`;
+            const predicted = getPredictedDates();
+            const today = new Date();
+
+            let html = '<div class="female-weekdays"><span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span></div><div class="female-days">';
+            for (let i=0; i<startOffset; i++) html += '<div class="female-day empty"></div>';
+            for (let d=1; d<=daysInMonth; d++) {
+                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                let classes = 'female-day';
+                if (isDateInPeriod(dateStr)) classes += ' period';
+                else if (predicted.includes(dateStr)) classes += ' predicted';
+                if (dayData[dateStr] && dayData[dateStr].secret) classes += ' has-secret';
+                if (dayData[dateStr] && dayData[dateStr].symptoms) classes += ' has-symptoms';
+                if (year === today.getFullYear() && month === today.getMonth() && d === today.getDate()) classes += ' today';
+                const symptoms = dayData[dateStr] ? dayData[dateStr].symptoms : '';
+                html += `<div class="${classes}" data-date="${dateStr}" data-symptoms="${symptoms}">${d}</div>`;
+            }
+            html += '</div>';
+            femaleCalendar.innerHTML = html;
+            document.querySelectorAll('.female-day[data-date]').forEach(day => day.addEventListener('click', () => openDayModal(day.dataset.date)));
+            renderFemaleStats();
+        }
+
+        function openDayModal(dateStr) {
+            selectedDate = dateStr;
+            modalDateEl.textContent = `Дата: ${dateStr}`;
+            const data = dayData[dateStr] || {};
+            dayStateInput.value = data.state || 5;
+            stateValueSpan.textContent = data.state || 5;
+            daySymptomsInput.value = data.symptoms || '';
+            dayNoteTextarea.value = data.note || '';
+            daySecretCheckbox.checked = data.secret || false;
+            modal.style.display = 'block';
+        }
+
+        function closeModal() { modal.style.display = 'none'; selectedDate = null; }
+
+        function renderFemaleStats() {
+            const dates = Object.keys(dayData).sort().reverse().slice(0,10);
+            let html = '<h4>Последние записи:</h4>';
+            if (!dates.length) html += '<p>Нет записей.</p>';
+            else dates.forEach(d => {
+                const data = dayData[d];
+                html += `<div class="female-stats-item"><span>${d}</span><span>${data.state ? '☀️'+data.state : ''} ${data.secret ? '🔴' : ''} ${data.symptoms || ''}</span></div>`;
+                if (data.note) html += `<div style="font-style:italic;">${data.note}</div>`;
+            });
+            femaleStats.innerHTML = html;
+        }
+
+        prevMonthBtn.addEventListener('click', () => {
+            currentDisplayDate = new Date(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth()-1, 1);
+            renderFemaleCalendar();
+        });
+        nextMonthBtn.addEventListener('click', () => {
+            currentDisplayDate = new Date(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth()+1, 1);
+            renderFemaleCalendar();
         });
 
-        // Обновляем статистику
-        renderFemaleStats();
-    }
+        markPeriodStartBtn.addEventListener('click', () => {
+            if (!selectedDate) return;
+            if (periods.find(p => !p.end)) { alert('Сначала закройте текущий период.'); return; }
+            periods.push({ start: selectedDate, end: null });
+            savePeriods(); renderFemaleCalendar(); closeModal();
+        });
+        markPeriodEndBtn.addEventListener('click', () => {
+            if (!selectedDate) return;
+            const open = periods.filter(p => !p.end).sort((a,b)=>new Date(b.start)-new Date(a.start));
+            if (!open.length) { alert('Нет открытого периода.'); return; }
+            const p = open[0];
+            if (new Date(selectedDate) < new Date(p.start)) { alert('Дата окончания раньше начала.'); return; }
+            p.end = selectedDate;
+            savePeriods(); renderFemaleCalendar(); closeModal();
+        });
 
-    // Открыть модальное окно для даты
-    function openDayModal(dateStr) {
-        selectedDate = dateStr;
-        modalDateEl.textContent = `Дата: ${dateStr}`;
-        const data = dayData[dateStr] || {};
-        dayStateInput.value = data.state || 5;
-        stateValueSpan.textContent = data.state || 5;
-        dayNoteTextarea.value = data.note || '';
-        daySecretCheckbox.checked = data.secret || false;
-        modal.style.display = 'block';
-    }
+        dayStateInput.addEventListener('input', () => stateValueSpan.textContent = dayStateInput.value);
+        saveDayDataBtn.addEventListener('click', () => {
+            if (!selectedDate) return;
+            dayData[selectedDate] = {
+                state: parseInt(dayStateInput.value),
+                symptoms: daySymptomsInput.value.trim(),
+                note: dayNoteTextarea.value.trim(),
+                secret: daySecretCheckbox.checked
+            };
+            saveDayData(); renderFemaleCalendar(); closeModal();
+        });
+        clearDayDataBtn.addEventListener('click', () => {
+            if (!selectedDate) return;
+            if (confirm('Очистить данные за этот день?')) { delete dayData[selectedDate]; saveDayData(); renderFemaleCalendar(); closeModal(); }
+        });
 
-    // Закрыть модальное окно
-    function closeModal() {
-        modal.style.display = 'none';
-        selectedDate = null;
-    }
-
-    // Рендер блока статистики (последние 10 записей)
-    function renderFemaleStats() {
-        const datesWithData = Object.keys(dayData).sort().reverse().slice(0, 10);
-        let html = '<h4>Последние записи:</h4>';
-        if (datesWithData.length === 0) {
-            html += '<p>Пока нет записей.</p>';
-        } else {
-            datesWithData.forEach(dateStr => {
-                const data = dayData[dateStr];
-                const secretMark = data.secret ? '🔴' : '';
-                html += `<div class="female-stats-item"><span>${dateStr}</span><span>${data.state ? 'Состояние: '+data.state : ''} ${secretMark}</span></div>`;
-                if (data.note) {
-                    html += `<div class="female-stats-item" style="font-style:italic;">${data.note}</div>`;
-                }
-            });
-        }
-        femaleStats.innerHTML = html;
-    }
-
-    // Обработчики событий
-    prevMonthBtn.addEventListener('click', () => {
-        currentDisplayDate = new Date(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() - 1, 1);
+        closeModalBtn.addEventListener('click', closeModal);
+        window.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
         renderFemaleCalendar();
-    });
+    })();
 
-    nextMonthBtn.addEventListener('click', () => {
-        currentDisplayDate = new Date(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() + 1, 1);
-        renderFemaleCalendar();
-    });
+    // ========== ТРЕКЕР НАСТРОЕНИЯ ==========
+    let moods = JSON.parse(localStorage.getItem('moods')) || [];
 
-    // Кнопки в модальном окне
-    markPeriodStartBtn.addEventListener('click', () => {
-        if (!selectedDate) return;
-        // Проверим, есть ли незакрытый период
-        const openPeriod = periods.find(p => !p.end);
-        if (openPeriod) {
-            alert('Сначала закройте текущий период (укажите конец месячных).');
+    function renderMoods() {
+        const entries = document.getElementById('moodEntries');
+        if (!entries) return;
+        entries.innerHTML = moods.slice(0,20).map(m => `
+            <div class="mood-entry">
+                <div class="mood-header">
+                    <span>${m.date}</span>
+                    <span>Оценка: ${m.rating}/10</span>
+                </div>
+                ${m.good ? `<div class="mood-good">✅ ${m.good}</div>` : ''}
+                ${m.bad ? `<div class="mood-bad">❌ ${m.bad}</div>` : ''}
+            </div>
+        `).join('');
+
+        // Круговая диаграмма
+        const canvas = document.getElementById('moodChart');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width, height = canvas.height;
+        ctx.clearRect(0,0,width,height);
+        if (moods.length === 0) {
+            ctx.fillStyle = '#ccc';
+            ctx.beginPath();
+            ctx.arc(width/2, height/2, 80, 0, 2*Math.PI);
+            ctx.fill();
+            ctx.fillStyle = '#666';
+            ctx.font = '12px sans-serif';
+            ctx.fillText('Нет данных', width/2-40, height/2);
             return;
         }
-        periods.push({ start: selectedDate, end: null });
-        savePeriods();
-        renderFemaleCalendar();
-        closeModal();
-    });
 
-    markPeriodEndBtn.addEventListener('click', () => {
-        if (!selectedDate) return;
-        const openPeriods = periods.filter(p => !p.end).sort((a, b) => new Date(b.start) - new Date(a.start));
-        if (openPeriods.length === 0) {
-            alert('Нет открытого периода месячных.');
-            return;
+        const groups = [0,0,0]; // 1-3,4-7,8-10
+        moods.forEach(m => {
+            const r = m.rating;
+            if (r <= 3) groups[0]++;
+            else if (r <= 7) groups[1]++;
+            else groups[2]++;
+        });
+        const total = moods.length;
+        const angles = groups.map(g => g / total * 2 * Math.PI);
+        const colors = ['#f8bbd0', '#ffe082', '#a8e6cf'];
+        let start = 0;
+        for (let i=0; i<3; i++) {
+            if (angles[i] === 0) continue;
+            ctx.fillStyle = colors[i];
+            ctx.beginPath();
+            ctx.moveTo(width/2, height/2);
+            ctx.arc(width/2, height/2, 80, start, start + angles[i]);
+            ctx.closePath();
+            ctx.fill();
+            start += angles[i];
         }
-        const period = openPeriods[0]; // самый последний открытый
-        if (new Date(selectedDate) < new Date(period.start)) {
-            alert('Дата окончания не может быть раньше даты начала.');
-            return;
-        }
-        period.end = selectedDate;
-        savePeriods();
-        renderFemaleCalendar();
-        closeModal();
+        ctx.fillStyle = '#2c3e50';
+        ctx.font = 'bold 14px sans-serif';
+        ctx.fillText(`${((groups[2]/total)*100).toFixed(0)}%`, width/2+20, height/2-20);
+        ctx.fillStyle = '#666';
+        ctx.font = '12px sans-serif';
+        ctx.fillText('1-3', width/2-50, height/2-10);
+        ctx.fillText('4-7', width/2-10, height/2+30);
+        ctx.fillText('8-10', width/2+30, height/2-40);
+    }
+
+    const moodDate = document.getElementById('moodDate');
+    if (moodDate) moodDate.valueAsDate = new Date();
+    const moodRating = document.getElementById('moodRating');
+    if (moodRating) {
+        moodRating.addEventListener('input', (e) => {
+            document.getElementById('moodValue').textContent = e.target.value;
+        });
+    }
+
+    document.getElementById('addMood')?.addEventListener('click', () => {
+        const date = document.getElementById('moodDate').value;
+        const rating = parseInt(document.getElementById('moodRating').value);
+        const good = document.getElementById('moodGood').value.trim();
+        const bad = document.getElementById('moodBad').value.trim();
+        if (!date || !rating) return;
+        moods.unshift({ date, rating, good, bad });
+        localStorage.setItem('moods', JSON.stringify(moods));
+        renderMoods();
+        document.getElementById('moodGood').value = '';
+        document.getElementById('moodBad').value = '';
     });
 
-    dayStateInput.addEventListener('input', () => {
-        stateValueSpan.textContent = dayStateInput.value;
+    renderMoods();
+
+    // ========== БЭКАП И ВОССТАНОВЛЕНИЕ ==========
+    document.getElementById('backupBtn')?.addEventListener('click', () => {
+        const data = {
+            birthdays, thoughts, books, accounts, transactions, shopping, todos, praises,
+            femalePeriods: JSON.parse(localStorage.getItem('femalePeriods') || '[]'),
+            femaleDayData: JSON.parse(localStorage.getItem('femaleDayData') || '{}'),
+            monthlyGoal, moods
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `organizer_backup_${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
     });
 
-    saveDayDataBtn.addEventListener('click', () => {
-        if (!selectedDate) return;
-        const state = parseInt(dayStateInput.value);
-        const note = dayNoteTextarea.value.trim();
-        const secret = daySecretCheckbox.checked;
-        dayData[selectedDate] = { state, note, secret };
-        saveDayData();
-        renderFemaleCalendar();
-        closeModal();
+    document.getElementById('restoreBtn')?.addEventListener('click', () => {
+        document.getElementById('restoreFile').click();
     });
 
-    clearDayDataBtn.addEventListener('click', () => {
-        if (!selectedDate) return;
-        if (confirm('Очистить все данные за этот день?')) {
-            delete dayData[selectedDate];
-            saveDayData();
-            renderFemaleCalendar();
-            closeModal();
-        }
+    document.getElementById('restoreFile')?.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            try {
+                const data = JSON.parse(ev.target.result);
+                if (data.birthdays) { birthdays = data.birthdays; localStorage.setItem('birthdays', JSON.stringify(birthdays)); }
+                if (data.thoughts) { thoughts = data.thoughts; localStorage.setItem('thoughts', JSON.stringify(thoughts)); }
+                if (data.books) { books = data.books; localStorage.setItem('books', JSON.stringify(books)); }
+                if (data.accounts) { accounts = data.accounts; localStorage.setItem('accounts', JSON.stringify(accounts)); }
+                if (data.transactions) { transactions = data.transactions; localStorage.setItem('transactions', JSON.stringify(transactions)); }
+                if (data.shopping) { shopping = data.shopping; localStorage.setItem('shopping', JSON.stringify(shopping)); }
+                if (data.todos) { todos = data.todos; localStorage.setItem('todos', JSON.stringify(todos)); }
+                if (data.praises) { praises = data.praises; localStorage.setItem('praises', JSON.stringify(praises)); }
+                if (data.femalePeriods) localStorage.setItem('femalePeriods', JSON.stringify(data.femalePeriods));
+                if (data.femaleDayData) localStorage.setItem('femaleDayData', JSON.stringify(data.femaleDayData));
+                if (data.monthlyGoal !== undefined) { monthlyGoal = data.monthlyGoal; localStorage.setItem('monthlyGoal', monthlyGoal); }
+                if (data.moods) { moods = data.moods; localStorage.setItem('moods', JSON.stringify(moods)); }
+
+                alert('Данные восстановлены! Страница будет перезагружена.');
+                window.location.reload();
+            } catch (err) {
+                alert('Ошибка при восстановлении: неверный формат файла.');
+            }
+        };
+        reader.readAsText(file);
+        e.target.value = '';
     });
 
-    closeModalBtn.addEventListener('click', closeModal);
+    // ========== ОЧИСТКА ВСЕХ ДАННЫХ ==========
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    const clearModal = document.getElementById('clearAllModal');
+    const closeClear = document.querySelector('.close-clear');
+    const confirmClear = document.getElementById('confirmClear');
+    const cancelClear = document.getElementById('cancelClear');
+
+    if (clearAllBtn) {
+        clearAllBtn.addEventListener('click', () => {
+            clearModal.style.display = 'block';
+        });
+    }
+
+    if (closeClear) {
+        closeClear.addEventListener('click', () => {
+            clearModal.style.display = 'none';
+        });
+    }
+
+    if (cancelClear) {
+        cancelClear.addEventListener('click', () => {
+            clearModal.style.display = 'none';
+        });
+    }
+
+    if (confirmClear) {
+        confirmClear.addEventListener('click', () => {
+            const keysToRemove = [
+                'birthdays', 'thoughts', 'books', 'accounts', 'transactions',
+                'shopping', 'todos', 'praises', 'femalePeriods', 'femaleDayData',
+                'monthlyGoal', 'moods'
+            ];
+            keysToRemove.forEach(key => localStorage.removeItem(key));
+            window.location.reload();
+        });
+    }
+
     window.addEventListener('click', (e) => {
-        if (e.target === modal) closeModal();
+        if (e.target === clearModal) {
+            clearModal.style.display = 'none';
+        }
     });
-
-    // Инициализация
-    renderFemaleCalendar();
-})();
-
-
-// ========== ОЧИСТКА ВСЕХ ДАННЫХ ==========
-const clearAllBtn = document.getElementById('clearAllBtn');
-const clearModal = document.getElementById('clearAllModal');
-const closeClear = document.querySelector('.close-clear');
-const confirmClear = document.getElementById('confirmClear');
-const cancelClear = document.getElementById('cancelClear');
-
-if (clearAllBtn) {
-    clearAllBtn.addEventListener('click', () => {
-        clearModal.style.display = 'block';
-    });
-}
-
-if (closeClear) {
-    closeClear.addEventListener('click', () => {
-        clearModal.style.display = 'none';
-    });
-}
-
-if (cancelClear) {
-    cancelClear.addEventListener('click', () => {
-        clearModal.style.display = 'none';
-    });
-}
-
-if (confirmClear) {
-    confirmClear.addEventListener('click', () => {
-        // Очищаем все ключи localStorage, которые используются в приложении
-        const keysToRemove = [
-            'birthdays',
-            'thoughts',
-            'books',
-            'accounts',
-            'transactions',
-            'shopping',
-            'todos',
-            'praises',
-            'femalePeriods',
-            'femaleDayData'
-        ];
-        keysToRemove.forEach(key => localStorage.removeItem(key));
-        
-        // Также можно очистить все данные без списка, но осторожно:
-        // localStorage.clear(); // раскомментировать, если нужно удалить абсолютно всё
-        
-        // Перезагружаем страницу для сброса состояния
-        window.location.reload();
-    });
-}
-
-// Закрытие модального окна при клике вне его
-window.addEventListener('click', (e) => {
-    if (e.target === clearModal) {
-        clearModal.style.display = 'none';
-    }
-});
 });
